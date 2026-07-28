@@ -128,7 +128,7 @@ create_infrastructure() {
     snow_sql -f "$tmpdir/02.sql"
 
     # Seed portal title
-    ESCAPED_TITLE=$(python3 -c "import json; print(json.dumps('${PORTAL_TITLE}').replace(\"'\",\"''\"))")
+    ESCAPED_TITLE=$(python3 -c "import json,sys; print(json.dumps(sys.argv[1]).replace(\"'\",\"''\"))" "$PORTAL_TITLE")
     snow_sql -q "MERGE INTO ${DATABASE}.${SCHEMA}.SETTINGS t USING (SELECT 'portal_title' AS key) s ON t.key = s.key WHEN MATCHED THEN UPDATE SET value = PARSE_JSON('${ESCAPED_TITLE}') WHEN NOT MATCHED THEN INSERT (key, value) VALUES ('portal_title', PARSE_JSON('${ESCAPED_TITLE}'));"
 
     REPO_URL=$(snow_sql -q "SHOW IMAGE REPOSITORIES IN SCHEMA ${DATABASE}.${SCHEMA};" --format json 2>/dev/null | python3 -c "
