@@ -1,31 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PORTAL_API_PREFIXES = [
-  "/api/sessions",
-  "/api/demos",
-  "/api/health",
-  "/api/settings",
-  "/api/upload",
-  "/api/image",
-  "/api/tiles",
-];
-
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
+  // Never rewrite these paths — they belong to the portal itself
   if (
     path.startsWith("/apps/") ||
     path.startsWith("/admin") ||
+    path.startsWith("/api/") ||
     path.startsWith("/logo") ||
     path.startsWith("/favicon")
   ) {
     return NextResponse.next();
   }
 
-  if (path.startsWith("/api/") && PORTAL_API_PREFIXES.some((r) => path.startsWith(r))) {
-    return NextResponse.next();
-  }
-
+  // If a demo iframe set the active_demo cookie, rewrite bare paths
+  // (e.g. / → /apps/slug/) so Next.js client-side navigation from
+  // within the iframe stays under the proxy prefix.
   const activeDemo = request.cookies.get("active_demo")?.value;
   if (!activeDemo) {
     return NextResponse.next();
@@ -37,5 +28,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/image|_next/webpack).*)"],
+  matcher: ["/((?!_next|favicon.ico).*)"],
 };

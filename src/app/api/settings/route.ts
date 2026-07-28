@@ -14,8 +14,8 @@ export async function GET() {
       if (key === "topics" || key === "capabilities") {
         settings[key] = Array.isArray(value) ? value : JSON.parse(value as string);
       } else if (key === "portal_title" || key === "portal_logo") {
-        // These are stored as JSON strings e.g. "\"My Title\""
-        settings[key] = typeof value === "string" ? JSON.parse(value) : value;
+        // VARIANT scalars come back already parsed from the SDK (plain string)
+        settings[key] = value;
       }
     }
 
