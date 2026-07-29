@@ -14,6 +14,7 @@ async function getInternalHost(slug: string): Promise<string | null> {
 
 function rewriteHtml(html: string, slug: string): string {
   const prefix = `/apps/${slug}`;
+  const isNextJs = html.includes("__NEXT_DATA__") || html.includes("/_next/");
   // Rewrite absolute paths in src/href/action attributes
   let rewritten = html
     .replace(/(href|src|action)="\/(?!apps\/)/g, `$1="${prefix}/`)
@@ -38,11 +39,8 @@ function rewriteHtml(html: string, slug: string): string {
   var prefix = "${prefix}";
   // Set cookie so middleware can rewrite unprefixed iframe navigation
   document.cookie = "active_demo=${slug};path=/;SameSite=Lax";
-  // Reset the iframe URL to root so client-side routers (React Router, Vue Router)
-  // match their routes correctly — only for non-Next.js apps (Vite SPAs)
-  if (!window.__NEXT_DATA__) {
-    try { window.history.replaceState(null, '', '/'); } catch(e) {}
-  }
+  ${!isNextJs ? `// Reset the iframe URL to root so Vite SPA routers match at /
+  try { window.history.replaceState(null, '', '/'); } catch(e) {}` : '// Next.js app detected — skip replaceState to preserve RSC routing'}
   // Set webpack public path so dynamically loaded chunks use the prefix
   // (safe in iframe — isolated global scope, doesn't affect portal parent)
   window.__webpack_public_path__ = prefix + "/_next/";
