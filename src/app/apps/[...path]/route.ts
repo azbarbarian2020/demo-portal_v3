@@ -39,8 +39,10 @@ function rewriteHtml(html: string, slug: string): string {
   // Set cookie so middleware can rewrite unprefixed iframe navigation
   document.cookie = "active_demo=${slug};path=/;SameSite=Lax";
   // Reset the iframe URL to root so client-side routers (React Router, Vue Router)
-  // match their routes correctly — they read window.location.pathname
-  try { window.history.replaceState(null, '', '/'); } catch(e) {}
+  // match their routes correctly — only for non-Next.js apps (Vite SPAs)
+  if (!window.__NEXT_DATA__) {
+    try { window.history.replaceState(null, '', '/'); } catch(e) {}
+  }
   // Set webpack public path so dynamically loaded chunks use the prefix
   // (safe in iframe — isolated global scope, doesn't affect portal parent)
   window.__webpack_public_path__ = prefix + "/_next/";
