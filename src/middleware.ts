@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // Never rewrite these paths — they belong to the portal itself
+  // Portal-owned paths: NEVER rewrite
   if (
+    path === "/" ||
     path.startsWith("/apps/") ||
     path.startsWith("/admin") ||
     path.startsWith("/api/") ||
@@ -14,9 +15,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // If a demo iframe set the active_demo cookie, rewrite bare paths
-  // (e.g. / → /apps/slug/) so Next.js client-side navigation from
-  // within the iframe stays under the proxy prefix.
+  // For asset paths (e.g. /assets/...) that Vite apps reference:
+  // rewrite through the proxy using the active_demo cookie
   const activeDemo = request.cookies.get("active_demo")?.value;
   if (!activeDemo) {
     return NextResponse.next();
@@ -28,5 +28,10 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|favicon.ico).*)"],
+  // Only run middleware on paths that are NOT:
+  // - _next (static assets, webpack, images)
+  // - favicon.ico
+  // - Root path / (matched as empty after leading /)
+  // The middleware handles: /assets/*, /static/*, etc.
+  matcher: ["/((?!_next|favicon.ico|$).+)"],
 };

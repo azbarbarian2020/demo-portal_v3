@@ -5,14 +5,14 @@ import { useState, useEffect } from "react";
 
 export default function Header() {
   const [title, setTitle] = useState("Demo Portal");
-  const [logoPath, setLogoPath] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/settings")
       .then((r) => r.json())
       .then((data) => {
         if (data.portal_title) setTitle(data.portal_title);
-        if (data.portal_logo) setLogoPath(data.portal_logo);
+        if (data.portal_logo) setLogoUrl(`/api/image?path=${encodeURIComponent(data.portal_logo)}&t=${Date.now()}`);
       })
       .catch(() => {});
   }, []);
@@ -20,9 +20,9 @@ export default function Header() {
   return (
     <header className="bg-gradient-to-r from-[#0c2340] to-[#11567F] px-8 py-5 flex items-center justify-between shadow-lg">
       <Link href="/" className="flex items-center gap-4">
-        {logoPath ? (
+        {logoUrl ? (
           <img
-            src={`/api/image?path=${encodeURIComponent(logoPath)}`}
+            src={logoUrl}
             alt={title}
             className="h-16 w-16 rounded-full object-contain bg-white/10"
           />

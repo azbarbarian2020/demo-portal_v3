@@ -18,6 +18,11 @@ function rewriteHtml(html: string, slug: string): string {
   let rewritten = html
     .replace(/(href|src|action)="\/(?!apps\/)/g, `$1="${prefix}/`)
     .replace(/(href|src|action)='\/(?!apps\/)/g, `$1='${prefix}/`);
+  // Strip crossorigin attribute — causes CORS-mode script loading that SPCS blocks
+  const crossoriginRegex = new RegExp("\\s+crossorigin(?:=\"[^\"]*\"|\\s|>)", "gi");
+  rewritten = rewritten.replace(crossoriginRegex, (match) => {
+    return match.endsWith('>') ? '>' : ' ';
+  });
   // Rewrite srcset attribute paths (format: "/path 1x, /path 2x")
   rewritten = rewritten.replace(/srcset="([^"]*)"/g, (match, value) => {
     const rewrittenValue = value.replace(/(^|,\s*)\/(?!apps\/)/g, `$1${prefix}/`);
@@ -33,6 +38,9 @@ function rewriteHtml(html: string, slug: string): string {
   var prefix = "${prefix}";
   // Set cookie so middleware can rewrite unprefixed iframe navigation
   document.cookie = "active_demo=${slug};path=/;SameSite=Lax";
+  // Reset the iframe URL to root so client-side routers (React Router, Vue Router)
+  // match their routes correctly — they read window.location.pathname
+  try { window.history.replaceState(null, '', '/'); } catch(e) {}
   // Set webpack public path so dynamically loaded chunks use the prefix
   // (safe in iframe — isolated global scope, doesn't affect portal parent)
   window.__webpack_public_path__ = prefix + "/_next/";
@@ -194,6 +202,7 @@ async function proxyRequest(request: NextRequest, targetUrl: string, slug: strin
     const text = await response.text();
     const rewritten = rewriteHtml(text, slug);
     responseHeaders.delete("content-length");
+    responseHeaders.set("cache-control", "no-store, must-revalidate");
     return new NextResponse(rewritten, {
       status: response.status,
       statusText: response.statusText,
@@ -234,6 +243,7 @@ async function proxyRequest(request: NextRequest, targetUrl: string, slug: strin
 
   // Stream through SSE/event-stream responses (AI/chat endpoints)
   if (contentType.includes("text/event-stream") || contentType.includes("stream")) {
+    responseHeaders.set("X-Accel-Buffering", "no");
     return new NextResponse(response.body, {
       status: response.status,
       statusText: response.statusText,

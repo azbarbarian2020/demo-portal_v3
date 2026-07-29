@@ -40,7 +40,7 @@ async function closeExpiredUsageLogs() {
     await executeQuery(
       `UPDATE DEMO_PORTAL.PUBLIC.DEMO_USAGE_LOG l
        SET l.event_type = 'expired',
-           l.ended_at = l.started_at + INTERVAL '1 MINUTE' * d.idle_timeout_minutes,
+           l.ended_at = DATEADD(MINUTE, d.idle_timeout_minutes, l.started_at),
            l.duration_seconds = d.idle_timeout_minutes * 60
        FROM DEMO_PORTAL.PUBLIC.DEMOS d
        WHERE l.demo_id = d.id

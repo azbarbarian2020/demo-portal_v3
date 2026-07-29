@@ -12,9 +12,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    // Use a fixed filename with timestamp to bust cache
+    const ext = file.name.split(".").pop() || "png";
+    const safeFileName = `logo.${ext}`;
+
     const tmpDir = join(process.cwd(), "tmp");
     await mkdir(tmpDir, { recursive: true });
-    const tmpPath = join(tmpDir, file.name);
+    const tmpPath = join(tmpDir, safeFileName);
 
     const bytes = await file.arrayBuffer();
     await writeFile(tmpPath, Buffer.from(bytes));
@@ -28,7 +32,7 @@ export async function POST(request: Request) {
       await unlink(tmpPath).catch(() => {});
     }
 
-    const logoPath = `portal/${file.name}`;
+    const logoPath = `portal/${safeFileName}`;
 
     // Update the portal_logo setting
     const escaped = JSON.stringify(logoPath).replace(/'/g, "''");

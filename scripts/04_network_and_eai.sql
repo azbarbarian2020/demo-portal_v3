@@ -1,10 +1,10 @@
 -- Demo Portal - Network Rules and External Access Integration
--- Allows the SPCS container to reach Snowflake APIs and S3 stages
+-- Allows the SPCS container to reach Snowflake APIs, S3 stages, and OpenStreetMap tiles
 
 CREATE OR REPLACE NETWORK RULE __DATABASE__.__SCHEMA__.SNOWFLAKE_API_RULE
   TYPE = HOST_PORT
   MODE = EGRESS
-  VALUE_LIST = ('__SNOWFLAKE_HOST__:443', '__S3_HOST__:443');
+  VALUE_LIST = ('__SNOWFLAKE_HOST__:443', '__S3_HOST__:443', 'tile.openstreetmap.org:443', 'a.tile.openstreetmap.org:443', 'b.tile.openstreetmap.org:443', 'c.tile.openstreetmap.org:443');
 
 CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION DEMO_PORTAL_EXTERNAL_ACCESS
   ALLOWED_NETWORK_RULES = (__DATABASE__.__SCHEMA__.SNOWFLAKE_API_RULE)

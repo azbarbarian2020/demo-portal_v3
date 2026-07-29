@@ -215,10 +215,10 @@ create_external_access() {
 
     if [ -n "$S3_HOST" ]; then
         echo "  S3 stage host: $S3_HOST"
-        snow_sql -q "CREATE OR REPLACE NETWORK RULE ${DATABASE}.${SCHEMA}.SNOWFLAKE_API_RULE TYPE = HOST_PORT MODE = EGRESS VALUE_LIST = ('${SNOWFLAKE_HOST}:443', '${S3_HOST}:443');"
+        snow_sql -q "CREATE OR REPLACE NETWORK RULE ${DATABASE}.${SCHEMA}.SNOWFLAKE_API_RULE TYPE = HOST_PORT MODE = EGRESS VALUE_LIST = ('${SNOWFLAKE_HOST}:443', '${S3_HOST}:443', 'tile.openstreetmap.org:443', 'a.tile.openstreetmap.org:443', 'b.tile.openstreetmap.org:443', 'c.tile.openstreetmap.org:443');"
     else
         echo -e "  ${YELLOW}Could not detect S3 stage host; using Snowflake host only${NC}"
-        snow_sql -q "CREATE OR REPLACE NETWORK RULE ${DATABASE}.${SCHEMA}.SNOWFLAKE_API_RULE TYPE = HOST_PORT MODE = EGRESS VALUE_LIST = ('${SNOWFLAKE_HOST}:443');"
+        snow_sql -q "CREATE OR REPLACE NETWORK RULE ${DATABASE}.${SCHEMA}.SNOWFLAKE_API_RULE TYPE = HOST_PORT MODE = EGRESS VALUE_LIST = ('${SNOWFLAKE_HOST}:443', 'tile.openstreetmap.org:443', 'a.tile.openstreetmap.org:443', 'b.tile.openstreetmap.org:443', 'c.tile.openstreetmap.org:443');"
     fi
 
     snow_sql -q "CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION DEMO_PORTAL_EXTERNAL_ACCESS ALLOWED_NETWORK_RULES = (${DATABASE}.${SCHEMA}.SNOWFLAKE_API_RULE) ALLOWED_AUTHENTICATION_SECRETS = (${DATABASE}.${SCHEMA}.PORTAL_PRIVATE_KEY_SECRET) ENABLED = TRUE;"
@@ -299,6 +299,8 @@ spec:
     - name: portal
       port: 8080
       public: true
+  networkPolicyConfig:
+    allowInternetEgress: true
 \$\$;"
 
     echo "  Waiting for service to start..."
