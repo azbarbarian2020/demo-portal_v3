@@ -33,6 +33,13 @@ function rewriteHtml(html: string, slug: string): string {
     const rewrittenValue = value.replace(/(^|,\s*)\/(?!apps\/)/g, `$1${prefix}/`);
     return `srcset='${rewrittenValue}'`;
   });
+  // For Next.js apps: inject assetPrefix into __NEXT_DATA__ so webpack loads chunks from proxy path
+  if (isNextJs) {
+    rewritten = rewritten.replace(
+      /<script id="__NEXT_DATA__" type="application\/json">\s*\{/,
+      `<script id="__NEXT_DATA__" type="application/json">{"assetPrefix":"${prefix}",`
+    );
+  }
   // Inject interceptors: fetch/XHR rewriting + MutationObserver for images
   const interceptScript = `<script>
 (function(){

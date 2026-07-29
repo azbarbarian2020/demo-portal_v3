@@ -1,22 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const PORTAL_API_PREFIXES = [
+  "/api/sessions",
+  "/api/demos",
+  "/api/health",
+  "/api/settings",
+  "/api/upload",
+  "/api/image",
+  "/api/tiles",
+  "/api/analytics",
+  "/api/portal-schedule",
+];
+
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // Portal-owned paths: NEVER rewrite
   if (
     path === "/" ||
     path.startsWith("/apps/") ||
     path.startsWith("/admin") ||
-    path.startsWith("/api/") ||
     path.startsWith("/logo") ||
     path.startsWith("/favicon")
   ) {
     return NextResponse.next();
   }
 
-  // For asset paths (e.g. /assets/...) that Vite apps reference:
-  // rewrite through the proxy using the active_demo cookie
+  // Only skip portal-owned API routes; proxied app APIs get rewritten
+  if (path.startsWith("/api/") && PORTAL_API_PREFIXES.some((r) => path.startsWith(r))) {
+    return NextResponse.next();
+  }
+
   const activeDemo = request.cookies.get("active_demo")?.value;
   if (!activeDemo) {
     return NextResponse.next();
@@ -28,10 +41,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Only run middleware on paths that are NOT:
-  // - _next (static assets, webpack, images)
-  // - favicon.ico
-  // - Root path / (matched as empty after leading /)
-  // The middleware handles: /assets/*, /static/*, etc.
-  matcher: ["/((?!_next|favicon.ico|$).+)"],
+  matcher: ["/((?!_next/image|_next/webpack).*)"],
 };
